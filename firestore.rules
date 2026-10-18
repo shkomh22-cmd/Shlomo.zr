@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // רק כתובות המייל שברשימה, ורק אם המייל אומת, יכולות לקרוא ולכתוב.
+    // להוספת אדם נוסף: מוסיפים את המייל שלו לרשימה (באותיות קטנות) ומפרסמים מחדש.
+    // הדרישה ל-email_verified חיונית: בלעדיה מישהו יכול להירשם עם מייל שאינו שלו.
+    match /households/home/{document=**} {
+      allow read, write: if request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['your-email@gmail.com', 'wife-email@gmail.com'];
+    }
+  }
+}
