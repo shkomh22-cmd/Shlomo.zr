@@ -1,0 +1,45 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '11'
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Initialize Capacitor Android
+      run: |
+        npx cap init "My App" "com.example.myapp" --web-dir=.
+        npx cap add android
+
+    - name: Build Android App
+      run: |
+        npx cap sync
+        cd android && ./gradlew assembleDebug
+
+    - name: Upload APK Release
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+        
