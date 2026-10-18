@@ -1,0 +1,52 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Set up Java (Android Compatibility)
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install Dependencies
+      run: |
+        npm install @capacitor/cli @capacitor/core @capacitor/android
+        npm install
+
+    - name: Initialize and Create Android Project
+      run: |
+        npx cap init "My App" "com.example.myapp" --web-dir=. || true
+        # יצירה מחדש של תיקיית אנדרואיד מאפס כדי למנוע קריסה של update
+        rm -rf android
+        npx cap add android
+
+    - name: Sync Web Code to Android
+      run: npx cap sync
+
+    - name: Build Android App (APK)
+      run: |
+        cd android
+        chmod +x gradlew
+        ./gradlew assembleDebug
+
+    - name: Upload APK Release
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
